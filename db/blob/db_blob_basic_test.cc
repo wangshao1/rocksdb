@@ -1051,7 +1051,7 @@ TEST_F(DBBlobBasicTest, GetBlob_IndexWithInvalidFileNumber) {
   constexpr uint64_t size = 5678;
 
   BlobIndex::EncodeBlob(&blob_index, blob_file_number, offset, size,
-                        kNoCompression);
+                        kNoCompression, 0);
 
   WriteBatch batch;
   ASSERT_OK(WriteBatchInternal::PutBlobIndex(&batch, 0, key, blob_index));

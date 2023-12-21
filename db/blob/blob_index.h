@@ -26,11 +26,11 @@ namespace ROCKSDB_NAMESPACE {
 //      +------+------------+---------------+
 //
 //    kBlob:
-//      +------+-------------+----------+----------+-------------+
-//      | type | file number | offset   | size     | compression |
-//      +------+-------------+----------+----------+-------------+
-//      | char | varint64    | varint64 | varint64 | char        |
-//      +------+-------------+----------+----------+-------------+
+//      +------+-------------+----------+----------+----------+-------------+
+//      | type | file number | offset   | size     |   etime  | compression |
+//      +------+-------------+----------+----------+----------+-------------+
+//      | char | varint64    | varint64 | varint64 | varint64 |    char     |
+//      +------+-------------+----------+----------+-------------+----------+
 //
 //    kBlobTTL:
 //      +------+------------+-------------+----------+----------+-------------+
@@ -76,6 +76,11 @@ class BlobIndex {
     return file_number_;
   }
 
+  uint64_t expire_time() const {
+    assert(!IsInlined());
+    return etime_;
+  }
+
   uint64_t offset() const {
     assert(!IsInlined());
     return offset_;
@@ -110,7 +115,7 @@ class BlobIndex {
       value_ = slice;
     } else {
       if (GetVarint64(&slice, &file_number_) && GetVarint64(&slice, &offset_) &&
-          GetVarint64(&slice, &size_) && slice.size() == 1) {
+          GetVarint64(&slice, &size_) && GetVarint64(&slice, &etime_) && slice.size() == 1) {
         compression_ = static_cast<CompressionType>(*slice.data());
       } else {
         return Status::Corruption(kErrorMessage, "Corrupted blob offset");
@@ -149,14 +154,15 @@ class BlobIndex {
 
   static void EncodeBlob(std::string* dst, uint64_t file_number,
                          uint64_t offset, uint64_t size,
-                         CompressionType compression) {
+                         CompressionType compression, uint64_t etime) {
     assert(dst != nullptr);
     dst->clear();
-    dst->reserve(kMaxVarint64Length * 3 + 2);
+    dst->reserve(kMaxVarint64Length * 4 + 2);
     dst->push_back(static_cast<char>(Type::kBlob));
     PutVarint64(dst, file_number);
     PutVarint64(dst, offset);
     PutVarint64(dst, size);
+    PutVarint64(dst, etime);
     dst->push_back(static_cast<char>(compression));
   }
 
@@ -182,6 +188,7 @@ class BlobIndex {
   uint64_t offset_ = 0;
   uint64_t size_ = 0;
   CompressionType compression_ = kNoCompression;
+  uint64_t etime_ = 0;
 };
 
 }  // namespace ROCKSDB_NAMESPACE

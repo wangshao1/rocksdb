@@ -8793,7 +8793,7 @@ TEST_F(DBCompactionTest, CompactionWithBlobGCError_IndexWithInvalidFileNumber) {
   constexpr uint64_t size = 5678;
 
   BlobIndex::EncodeBlob(&blob_index, blob_file_number, offset, size,
-                        kNoCompression);
+                        kNoCompression, 0);
 
   WriteBatch batch;
   ASSERT_OK(

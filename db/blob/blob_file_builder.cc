@@ -104,6 +104,10 @@ Status BlobFileBuilder::Add(const Slice& key, const Slice& value,
     return Status::OK();
   }
 
+  Slice etime_slice = Slice(value.data() + value.size() - sizeof(uint64_t), sizeof(uint64_t));
+  uint64_t etime = 0;
+  GetFixed64(&etime_slice, &etime);
+
   {
     const Status s = OpenBlobFileIfNeeded();
     if (!s.ok()) {
@@ -150,7 +154,7 @@ Status BlobFileBuilder::Add(const Slice& key, const Slice& value,
   }
 
   BlobIndex::EncodeBlob(blob_index, blob_file_number, blob_offset, blob.size(),
-                        blob_compression_type_);
+                        blob_compression_type_, etime);
 
   return Status::OK();
 }

@@ -141,7 +141,7 @@ CompactionFilter::Decision BlobIndexCompactionFilterBase::HandleValueChange(
   }
   BlobIndex::EncodeBlob(new_value, new_blob_file_number, new_blob_offset,
                         new_blob_value.size(),
-                        blob_db_impl->bdb_options_.compression);
+                        blob_db_impl->bdb_options_.compression, 0);
   return Decision::kChangeBlobIndex;
 }
 
@@ -404,7 +404,7 @@ CompactionFilter::BlobDecision BlobIndexCompactionFilterGC::PrepareBlobOutput(
   }
 
   BlobIndex::EncodeBlob(new_value, new_blob_file_number, new_blob_offset,
-                        blob.size(), compression_type);
+                        blob.size(), compression_type, 0);
 
   gc_stats_.AddRelocatedBlob(blob_index.size());
 

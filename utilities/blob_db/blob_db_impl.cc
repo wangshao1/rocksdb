@@ -1380,7 +1380,7 @@ Status BlobDBImpl::AppendBlob(const std::shared_ptr<BlobFile>& bfile,
 
   if (expiration == kNoExpiration) {
     BlobIndex::EncodeBlob(index_entry, bfile->BlobFileNumber(), blob_offset,
-                          value.size(), bdb_options_.compression);
+                          value.size(), bdb_options_.compression, 0);
   } else {
     BlobIndex::EncodeBlobTTL(index_entry, expiration, bfile->BlobFileNumber(),
                              blob_offset, value.size(),

@@ -260,7 +260,7 @@ bool CompactionIterator::InvokeFilterIfNeeded(bool* need_skip,
 
     if (ikey_.type == kTypeBlobIndex) {
       decision = compaction_filter_->FilterBlobByKey(
-          level_, filter_key, &compaction_filter_value_,
+          level_, filter_key, value_, &compaction_filter_value_,
           compaction_filter_skip_until_.rep());
       if (decision == CompactionFilter::Decision::kUndetermined &&
           !compaction_filter_->IsStackedBlobDbInternalCompactionFilter()) {

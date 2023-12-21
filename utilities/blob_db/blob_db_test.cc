@@ -1946,7 +1946,7 @@ TEST_F(BlobDBTest, GarbageCollectionFailure) {
   // blob file.
   std::string blob_index;
   BlobIndex::EncodeBlob(&blob_index, /* file_number */ 1000, /* offset */ 1234,
-                        /* size */ 5678, kNoCompression);
+                        /* size */ 5678, kNoCompression, 0);
 
   WriteBatch batch;
   ASSERT_OK(WriteBatchInternal::PutBlobIndex(

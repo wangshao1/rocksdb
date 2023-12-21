@@ -269,7 +269,7 @@ class CompactionJobTestBase : public testing::Test {
                              uint64_t size) {
     std::string blob_index;
     BlobIndex::EncodeBlob(&blob_index, blob_file_number, offset, size,
-                          kNoCompression);
+                          kNoCompression, 0);
     return blob_index;
   }
 

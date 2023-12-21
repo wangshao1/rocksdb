@@ -236,7 +236,7 @@ TEST_F(FlushJobTest, NonEmpty) {
     } else {
       BlobIndex::EncodeBlob(&blob_index, blob_file_numbers[i],
                             /* offset */ i << 10, /* size */ i << 20,
-                            kNoCompression);
+                            kNoCompression, 0);
     }
 
     const SequenceNumber seq(i + 10001);

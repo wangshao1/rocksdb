@@ -1352,7 +1352,7 @@ TEST_F(DBTest, MetaDataTest) {
     // Add a single blob reference to each file
     std::string blob_index;
     BlobIndex::EncodeBlob(&blob_index, /* blob_file_number */ i + 1000,
-                          /* offset */ 1234, /* size */ 5678, kNoCompression);
+                          /* offset */ 1234, /* size */ 5678, kNoCompression, 0);
 
     WriteBatch batch;
     ASSERT_OK(WriteBatchInternal::PutBlobIndex(&batch, 0, Key(key_index),

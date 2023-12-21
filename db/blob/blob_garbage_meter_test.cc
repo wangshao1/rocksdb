@@ -53,7 +53,7 @@ TEST(BlobGarbageMeterTest, MeasureGarbage) {
 
     std::string value;
     BlobIndex::EncodeBlob(&value, blob.blob_file_number, blob.offset, blob.size,
-                          blob.compression_type);
+                          blob.compression_type, 0);
     const Slice value_slice(value);
 
     if (blob.has_in_flow) {
