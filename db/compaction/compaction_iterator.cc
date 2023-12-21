@@ -259,8 +259,18 @@ bool CompactionIterator::InvokeFilterIfNeeded(bool* need_skip,
     StopWatchNano timer(clock_, report_detailed_time_);
 
     if (ikey_.type == kTypeBlobIndex) {
+      // For integrated BlobDB impl, CompactionIterator reads blob value.
+      // For Stacked BlobDB impl, the corresponding CompactionFilter's
+      // FilterV2 method should read the blob value.
+      BlobIndex blob_index;
+      Status s = blob_index.DecodeFrom(value_);
+      if (!s.ok()) {
+          status_ = s;
+          validity_info_.Invalidate();
+          return false;
+      }
       decision = compaction_filter_->FilterBlobByKey(
-          level_, filter_key, value_, &compaction_filter_value_,
+          level_, filter_key, blob_index.expire_time(), &compaction_filter_value_,
           compaction_filter_skip_until_.rep());
       if (decision == CompactionFilter::Decision::kUndetermined &&
           !compaction_filter_->IsStackedBlobDbInternalCompactionFilter()) {
@@ -274,17 +284,6 @@ bool CompactionIterator::InvokeFilterIfNeeded(bool* need_skip,
         TEST_SYNC_POINT_CALLBACK(
             "CompactionIterator::InvokeFilterIfNeeded::TamperWithBlobIndex",
             &value_);
-
-        // For integrated BlobDB impl, CompactionIterator reads blob value.
-        // For Stacked BlobDB impl, the corresponding CompactionFilter's
-        // FilterV2 method should read the blob value.
-        BlobIndex blob_index;
-        Status s = blob_index.DecodeFrom(value_);
-        if (!s.ok()) {
-          status_ = s;
-          validity_info_.Invalidate();
-          return false;
-        }
 
         FilePrefetchBuffer* prefetch_buffer =
             prefetch_buffers_ ? prefetch_buffers_->GetOrCreatePrefetchBuffer(
