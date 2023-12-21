@@ -212,7 +212,16 @@ class PosixEnv : public CompositeEnv {
   static const char* kClassName() { return "PosixEnv"; }
   const char* Name() const override { return kClassName(); }
   const char* NickName() const override { return kDefaultName(); }
-
+  // Constructs the default Env, a singleton
+  PosixEnv();
+  ~PosixEnv() override {
+      for (const auto tid : threads_to_join_) {
+          pthread_join(tid, nullptr);
+      }
+      for (int pool_id = 0; pool_id < Env::Priority::TOTAL; ++pool_id) {
+          thread_pools_[pool_id].JoinAllThreads();
+      }
+  }
   struct JoinThreadsOnExit {
     explicit JoinThreadsOnExit(PosixEnv& _deflt) : deflt(_deflt) {}
     ~JoinThreadsOnExit() {
@@ -395,8 +404,6 @@ class PosixEnv : public CompositeEnv {
 
  private:
   friend Env* Env::Default();
-  // Constructs the default Env, a singleton
-  PosixEnv();
 
   // The below 4 members are only used by the default PosixEnv instance.
   // Non-default instances simply maintain references to the backing
@@ -513,6 +520,10 @@ Env* Env::Default() {
   // This destructor must be called on exit
   static PosixEnv::JoinThreadsOnExit thread_joiner(default_env);
   return &default_env;
+}
+
+Env* Env::Instance() {
+  return (new PosixEnv());
 }
 
 //
