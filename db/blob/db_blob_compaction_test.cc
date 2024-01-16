@@ -8,6 +8,7 @@
 #include "db/db_test_util.h"
 #include "port/stack_trace.h"
 #include "test_util/sync_point.h"
+#include "rocksdb/system_clock.h"
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -40,8 +41,13 @@ class FilterByKeyLength : public CompactionFilter {
     return "rocksdb.compaction.filter.by.key.length";
   }
   CompactionFilter::Decision FilterBlobByKey(
-      int /*level*/, const Slice& key, std::string* /*new_value*/,
+      int /*level*/, const Slice& key, uint64_t expire_time, std::string* /*new_value*/,
       std::string* /*skip_until*/) const override {
+    const auto clock = SystemClock::Default().get();
+    uint64_t now = clock->NowMicros() / 1000 / 1000;
+    if (expire_time != 0 && expire_time < now) {
+      return CompactionFilter::Decision::kRemove;
+    }
     if (key.size() < length_threshold_) {
       return CompactionFilter::Decision::kRemove;
     }
@@ -82,8 +88,13 @@ class BadBlobCompactionFilter : public CompactionFilter {
         filter_v2_(filter_v2) {}
   const char* Name() const override { return "rocksdb.compaction.filter.bad"; }
   CompactionFilter::Decision FilterBlobByKey(
-      int /*level*/, const Slice& key, std::string* /*new_value*/,
+      int /*level*/, const Slice& key, uint64_t expire_time, std::string* /*new_value*/,
       std::string* /*skip_until*/) const override {
+    const auto clock = SystemClock::Default().get();
+    uint64_t now = clock->NowMicros() / 1000 / 1000;
+    if (expire_time != 0 && expire_time < now) {
+      return CompactionFilter::Decision::kRemove;
+    }
     if (key.size() >= prefix_.size() &&
         0 == strncmp(prefix_.data(), key.data(), prefix_.size())) {
       return CompactionFilter::Decision::kUndetermined;
@@ -111,7 +122,7 @@ class ValueBlindWriteFilter : public CompactionFilter {
     return "rocksdb.compaction.filter.blind.write";
   }
   CompactionFilter::Decision FilterBlobByKey(
-      int level, const Slice& key, std::string* new_value,
+      int level, const Slice& key, uint64_t expire_time, std::string* new_value,
       std::string* skip_until) const override;
 
  private:
@@ -119,9 +130,14 @@ class ValueBlindWriteFilter : public CompactionFilter {
 };
 
 CompactionFilter::Decision ValueBlindWriteFilter::FilterBlobByKey(
-    int /*level*/, const Slice& /*key*/, std::string* new_value,
+    int /*level*/, const Slice& /*key*/, uint64_t expire_time, std::string* new_value,
     std::string* /*skip_until*/) const {
   assert(new_value);
+  const auto clock = SystemClock::Default().get();
+  uint64_t now = clock->NowMicros() / 1000 / 1000;
+  if (expire_time != 0 && expire_time < now) {
+    return CompactionFilter::Decision::kRemove;
+  }
   new_value->assign(new_value_);
   return CompactionFilter::Decision::kChangeValue;
 }

@@ -104,9 +104,10 @@ Status BlobFileBuilder::Add(const Slice& key, const Slice& value,
     return Status::OK();
   }
 
-  Slice etime_slice = Slice(value.data() + value.size() - sizeof(uint64_t), sizeof(uint64_t));
-  uint64_t etime = 0;
-  GetFixed64(&etime_slice, &etime);
+  // expire time is the suffix 8 bytes of value, see format in pika project
+  Slice expire_time_slice = Slice(value.data() + value.size() - sizeof(uint64_t), sizeof(uint64_t));
+  uint64_t expire_time = 0;
+  GetFixed64(&expire_time_slice, &expire_time);
 
   {
     const Status s = OpenBlobFileIfNeeded();
@@ -154,7 +155,7 @@ Status BlobFileBuilder::Add(const Slice& key, const Slice& value,
   }
 
   BlobIndex::EncodeBlob(blob_index, blob_file_number, blob_offset, blob.size(),
-                        blob_compression_type_, etime);
+                        blob_compression_type_, expire_time);
 
   return Status::OK();
 }
