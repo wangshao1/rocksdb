@@ -2967,6 +2967,24 @@ class Benchmark {
     return timestamp_emulator->Get() - timestamp > FLAGS_time_range;
   }
 
+  class BlobOptimizeFilter : public CompactionFilter {
+  public:
+    explicit BlobOptimizeFilter() {}
+    bool Filter(int /*level*/, const Slice& key,
+                const Slice& /*existing_value*/, std::string* /*new_value*/,
+                bool* /*value_changed*/) const override {
+      return false;
+    }
+    virtual Decision FilterBlobByKey(int /*level*/, const Slice& /*key*/,
+                                   uint64_t /*expire_time*/,
+                                   std::string* /*new_value*/,
+                                   std::string* /*skip_until*/) const {
+      return Decision::kKeep;
+    }
+
+    const char* Name() const override { return "BlobOptimizeFilter"; }
+  }
+
   class ExpiredTimeFilter : public CompactionFilter {
    public:
     explicit ExpiredTimeFilter(
@@ -3342,7 +3360,7 @@ class Benchmark {
     PrintHeader(open_options_);
     std::stringstream benchmark_stream(FLAGS_benchmarks);
     std::string name;
-    std::unique_ptr<ExpiredTimeFilter> filter;
+    std::unique_ptr<BlobOptimizeFilter> filter;
     while (std::getline(benchmark_stream, name, ',')) {
       // Sanitize parameters
       num_ = FLAGS_num;
@@ -3411,6 +3429,9 @@ class Benchmark {
           }
         }
       }
+      filter.reset(new BlobOptimizeFilter());
+      fprintf(stdout, "Compaction filter is used to for blob optimize");
+      open_options_.compaction_filter = filter.get();
 
       // Both fillseqdeterministic and filluniquerandomdeterministic
       // fill the levels except the max level with UNIQUE_RANDOM
