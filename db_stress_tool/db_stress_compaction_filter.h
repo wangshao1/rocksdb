@@ -23,6 +23,13 @@ class DbStressCompactionFilter : public CompactionFilter {
   DbStressCompactionFilter(SharedState* state, int cf_id)
       : state_(state), cf_id_(cf_id) {}
 
+  Decision FilterBlobByKey((int /*level*/, const Slice& /*key*/,
+                                   uint64_t /*expire_time*/,
+                                   std::string* /*new_value*/,
+                                   std::string* /*skip_until*/) const {
+    return CompactionFilter::Decision::kKeep;
+  }
+
   Decision FilterV2(int /*level*/, const Slice& key, ValueType /*value_type*/,
                     const Slice& /*existing_value*/, std::string* /*new_value*/,
                     std::string* /*skip_until*/) const override {
