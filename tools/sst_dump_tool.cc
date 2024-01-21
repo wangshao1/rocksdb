@@ -327,9 +327,26 @@ Status SstFileReader::ReadSequential(bool print_kv, uint64_t read_num,
     }
 
     if (print_kv) {
-      fprintf(stdout, "%s => %s\n",
-          ikey.DebugString(output_hex_).c_str(),
-          value.ToString(output_hex_).c_str());
+      // meta cf
+      if (table_properties_->column_family_id == 0) {
+        int32_t size = DecodeFixed32(value.data());
+        fprintf(stdout, "pkey: %s member_count: %d\n", ikey.user_key.ToString().c_str(), size);
+      } else { // data cf
+        std::string user_key = ikey.user_key.ToString();
+        int pos = 0;
+        if (user_key.length() > 8) {
+          int32_t pkey_size = DecodeFixed32(user_key.data());
+          std::string pkey = user_key.substr(4, pkey_size);
+          int32_t version = DecodeFixed32(user_key.data() + 4 + pkey_size);
+	  std::string member = user_key.substr(4 + pkey_size + 4);
+          fprintf(stdout, "pkey: %s, member: %s, version: %d, value_size: %d, value: %s\n", pkey.c_str(),
+	          member.c_str(), version, value.size(), value.ToString(false).c_str());
+        } else {
+          fprintf(stdout, "%s => %s\n",
+              ikey.DebugString(output_hex_).c_str(),
+              value.ToString(output_hex_).c_str());
+        }
+      }
     }
   }
 
